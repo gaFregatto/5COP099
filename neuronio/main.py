@@ -90,8 +90,8 @@ def activation(x):
     return sigmoid(x)
 
 
-def comb_linear(x1, x2, weights):
-    return x1*weights[0] + x2*weights[1] + weights[2]
+def comb_linear(x, weights):
+    return x[0]*weights[0] + x[1]*weights[1] + weights[2]
 
 
 def err(d, y):
@@ -102,9 +102,7 @@ def metrics(neuron, X, D):
     tp = fp = tn = fn = 0
 
     for x, d in zip(X, D):
-        x1 = x[0]
-        x2 = x[1]
-        pred = 0 if activation(comb_linear(x1, x2, neuron)) < 0.5 else 1
+        pred = 0 if activation(comb_linear(x, neuron)) < 0.5 else 1
 
         if pred == 1 and d == 1:
             tp += 1
@@ -134,15 +132,12 @@ def train(X, D, Ep, LR):
 
     for ep in range(Ep):
         for x, d in zip(X, D):
-            x1 = x[0]
-            x2 = x[1]
-            y = activation(comb_linear(x1, x2, theta))
+            y = activation(comb_linear(x, theta))
             # for i in range(len(theta[:-1])):
             #     theta[i] = theta[i] - LR * err(d, y) * x[i]/X.shape[0]
             theta[:-1] = theta[:-1] - LR * err(d, y) * x / X.shape[0]
             theta[-1] = theta[-1] - LR * err(d, y) / X.shape[0]
         # plot_all(f"Epoca {ep}", X, D, theta)
-
     plot_all("After training", X, D, theta)
     return theta
 
