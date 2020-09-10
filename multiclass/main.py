@@ -82,7 +82,7 @@ def train(X, D, Ep, LR):
                     weights[m][n] = weights[m][n] - LR * \
                         err(d, y, m) * x[0, n]/X.shape[0]
                 bias[0, m] = bias[0, m] - LR * err(d, y, m)/X.shape[0]
-    # plot_all("After trainig", X, D, weights, bias)
+    # plot_all("After training", X, D, weights, bias)
 
     return weights, bias
 
@@ -122,7 +122,7 @@ def main():
     X, D = prepare_data(sys.argv[1])
     neurons, bias = train(X, D, EPOCAS, LR)
     metrics(neurons, bias, X, D)
-    plot_all("After trainig", X, D, neurons, bias)
+    plot_all("After training", X, D, neurons, bias)
     exit(0)
 
 
