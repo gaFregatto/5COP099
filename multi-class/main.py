@@ -46,7 +46,7 @@ def plot_all(title, X, D, theta, bias):
     ax = fig.gca()
     ax.add_artist(origin)
 
-    plt.savefig('results/easy_'+title+'.png')
+    plt.savefig('results/hard_'+title+'.png')
     plt.show()
 
 
