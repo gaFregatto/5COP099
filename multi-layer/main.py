@@ -6,27 +6,14 @@ import pandas as pd
 import random as rd
 import matplotlib.pyplot as plt
 
-COLORS = ['blue', 'green', 'red', 'yellow', 'purple']
 LIM = 10
-EPOCAS = 1000
+EPOCAS = 10000
 LR = 0.1
 
-
-def prepare_data(file):
-    data = pd.read_csv(file, header=None)
-    dt = np.array(data)
-    X = dt[..., :4]
-    classes = dt[..., 4]
-
-    D = np.zeros((classes.shape[0], 3))
-    for i in range(classes.shape[0]):
-        if classes[i] == 'Iris-setosa':
-            D[i, 0] = 1.
-        elif classes[i] == 'Iris-versicolor':
-            D[i, 1] = 1.
-        elif classes[i] == 'Iris-virginica':
-            D[i, 2] = 1.
-    return X, D
+LAYERS = [4, 4, 2, 3]
+# LAYERS[0] representa a camanda de entrada (x1, x2, x3, x4)
+# LAYERS[-1] representa camada de saida
+# Entradas representam as colunas e as linhas representam as saídas
 
 
 def prepare_sets(X, D):
@@ -73,9 +60,73 @@ def prepare_sets(X, D):
     return train, val, test
 
 
+def prepare_data(file):
+    data = pd.read_csv(file, header=None)
+    dt = np.array(data)
+    X = dt[..., :4]
+    classes = dt[..., 4]
+
+    D = np.zeros((classes.shape[0], 3))
+    for i in range(classes.shape[0]):
+        if classes[i] == 'Iris-setosa':
+            D[i, 0] = 1.
+        elif classes[i] == 'Iris-versicolor':
+            D[i, 1] = 1.
+        elif classes[i] == 'Iris-virginica':
+            D[i, 2] = 1.
+    return X, D
+
+
+def sigmoid(x):
+    return 1./(1. + math.exp(-x))
+
+
+def activation(x, w, b):
+    result = np.matmul(w, x)
+    result = np.add(result, b)
+    return np.array([sigmoid(x) for x in result])
+
+
+def forward(entry, weights, biases):
+    result = entry.T
+    hs = [result]
+    for w, b in zip(weights, biases):
+        result = activation(result, w, b.T)
+        result = np.mat(result)
+        result = result.T
+        hs.append(result)
+    return hs
+
+
+def train(X, D, Ep, Lr):
+
+    weights = [np.random.uniform(-1, 1, [LAYERS[i+1], LAYERS[i]])
+               for i in range(len(LAYERS)-1)]
+    biases = [np.random.uniform(-1, 1, [1, LAYERS[i+1]])
+              for i in range(len(LAYERS)-1)]
+
+    # for i in range(len(biases)):
+    #     print(f"W{i}")
+    #     print(weights[i])
+    #     print(f"bias{i}")
+    #     print(biases[i])
+
+    for ep in range(Ep):
+        for x, d in zip(X, D):
+            x = np.mat(x)
+            hs = forward(x, weights, biases)
+            for i in range(len(hs)):
+                print(f"h{i}")
+                print(hs[i])
+            exit(0)
+    return weights, biases
+
+
 def main():
-    X, D = prepare_data(sys.argv[1])
-    trainset, valset, testset = prepare_sets(X, D)
+    # X, D = prepare_data(sys.argv[1])
+    # trainset, valset, testset = prepare_sets(X, D)
+    X_train, D_train = prepare_data('trainset.csv')
+    layers, bias = train(X_train, D_train, EPOCAS, LR)
     return 0
 
 
