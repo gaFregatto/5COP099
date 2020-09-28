@@ -6,11 +6,10 @@ import pandas as pd
 import random as rd
 import matplotlib.pyplot as plt
 
-LIM = 10
 EPOCAS = 10000
-LR = 0.1
+LR = 0.01
 
-LAYERS = [4, 4, 2, 3]
+LAYERS = [4, 2, 5, 3]
 # LAYERS[0] representa a camanda de entrada (x1, x2, x3, x4)
 # LAYERS[-1] representa camada de saida
 # Entradas representam as colunas e as linhas representam as saídas
@@ -77,56 +76,102 @@ def prepare_data(file):
     return X, D
 
 
+def read_data(file):
+    data = pd.read_csv(file, header=None)
+    dt = np.array(data)
+    X = dt[..., :4]
+    D = dt[..., 4:]
+    return X, D
+
+
 def sigmoid(x):
-    return 1./(1. + math.exp(-x))
+    return 1./(1. + np.exp(-x))
 
 
-def activation(x, w, b):
-    result = np.matmul(w, x)
-    result = np.add(result, b)
-    return np.array([sigmoid(x) for x in result])
+def lin_comb(x, w, b):
+    return np.matmul(x, w) + b
 
 
-def forward(entry, weights, biases):
-    result = entry.T
-    hs = [result]
-    for w, b in zip(weights, biases):
-        result = activation(result, w, b.T)
-        result = np.mat(result)
-        result = result.T
-        hs.append(result)
-    return hs
+def err(d, y):
+    return (2 * y - 2 * d) * (y * (1 - y))
 
 
-def train(X, D, Ep, Lr):
+def err_sigma(w, s, h):
+    return np.matmul(s, w) * (h * (1 - h))
 
-    weights = [np.random.uniform(-1, 1, [LAYERS[i+1], LAYERS[i]])
+
+def train(Xtrain, Dtrain, Ep, Lr, Xvalid, Dvalid):
+
+    # Inicialização
+    weights = [np.random.uniform(-1, 1, [LAYERS[i], LAYERS[i+1]])
                for i in range(len(LAYERS)-1)]
     biases = [np.random.uniform(-1, 1, [1, LAYERS[i+1]])
               for i in range(len(LAYERS)-1)]
 
-    # for i in range(len(biases)):
-    #     print(f"W{i}")
-    #     print(weights[i])
-    #     print(f"bias{i}")
-    #     print(biases[i])
+    # Parâmetros finais do modelo
+    Wfinal, bfinal = None, None
 
+    # Menor error de validação
+    min_e = float('inf')
+
+    # Treinamento
     for ep in range(Ep):
-        for x, d in zip(X, D):
-            x = np.mat(x)
-            hs = forward(x, weights, biases)
-            for i in range(len(hs)):
-                print(f"h{i}")
-                print(hs[i])
-            exit(0)
-    return weights, biases
+
+        # forward
+        h = []
+        for l in range(len(LAYERS)-1):
+            if l == 0:
+                h.append(sigmoid(lin_comb(Xtrain, weights[l], biases[l])))
+            else:
+                h.append(sigmoid(lin_comb(h[l-1], weights[l], biases[l])))
+
+        # backward
+        sigmas = [None for i in range(len(h))]
+        for l in range(len(h)-1, 0, -1):
+            if l == len(h)-1:
+                sigmas[l] = err(Dtrain, h[l])
+            else:
+                sigmas[l] = err_sigma(weights[l+1].T, sigmas[l+1], h[l])
+
+            weights[l] = weights[l] - \
+                (Lr * np.matmul(h[l-1].T if l > 0 else Xtrain, sigmas[l]))
+            biases[l] = biases[l] - (Lr * np.sum(sigmas[l], axis=0))
+
+        for l in range(len(LAYERS)-1):
+            Yvalid = sigmoid(
+                lin_comb(Xvalid if l == 0 else Yvalid, weights[l], biases[l]))
+
+        error = ((Dvalid-Yvalid)**2).mean()
+        if error < min_e:
+            epfinal = ep
+            min_e = error
+            Wfinal = weights.copy()
+            bfinal = biases.copy()
+
+        print(f"Época: {ep} || error: {error}")
+    print(f"Melhor época: {epfinal} || Melhor erro: {min_e}")
+    return Wfinal, bfinal
 
 
 def main():
     # X, D = prepare_data(sys.argv[1])
     # trainset, valset, testset = prepare_sets(X, D)
-    X_train, D_train = prepare_data('trainset.csv')
-    layers, bias = train(X_train, D_train, EPOCAS, LR)
+    X_train, D_train = read_data('trainset.csv')
+    X_valid, D_valid = read_data('valset.csv')
+    X_test, D_test = read_data('testset.csv')
+
+    layers, biases = train(X_train, D_train, EPOCAS, LR,
+                           X_valid, D_valid)
+
+    for l in range(len(LAYERS)-1):
+        Ytest = sigmoid(
+            lin_comb(X_test if l == 0 else Ytest, layers[l], biases[l]))
+
+    y_pred = np.where(Ytest > 0.5, 1.0, 0.0)
+    errors = (np.argmax(Ytest, -1) != np.argmax(D_test, -1)).sum()
+    total = X_test.shape[0]
+    print("Taxa de erro: %.2f%%" % (100.*(errors/total)))
+
     return 0
 
 

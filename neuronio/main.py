@@ -112,8 +112,8 @@ def metrics(neuron, X, D):
             tn += 1
         elif pred == 0 and d == 1:
             fn += 1
-    # print(tp, tn, fp, fn)
-    # plot_all("After training", X, D, neuron)
+    print(tp, tn, fp, fn)
+    plot_all("After training", X, D, neuron)
 
     precision = tp / float(tp + fp)
     recall = tp / float(tp + fn)
@@ -128,7 +128,7 @@ def metrics(neuron, X, D):
 def train(X, D, Ep, LR):
     theta = np.array(
         [rd.uniform(-1, 1), rd.uniform(-1, 1), rd.uniform(-1, 1)])
-    plot_all("Before training", X, D, theta)
+    # plot_all("Before training", X, D, theta)
 
     for ep in range(Ep):
         for x, d in zip(X, D):
@@ -138,13 +138,13 @@ def train(X, D, Ep, LR):
             theta[:-1] = theta[:-1] - LR * err(d, y) * x / X.shape[0]
             theta[-1] = theta[-1] - LR * err(d, y) / X.shape[0]
         # plot_all(f"Epoca {ep}", X, D, theta)
-    plot_all("After training", X, D, theta)
+    # plot_all("After training", X, D, theta)
     return theta
 
 
 def main():
-    X, D = prepare_data(sys.argv[1])
-    # X, D = data_input(28)
+    # X, D = prepare_data(sys.argv[1])
+    X, D = data_input(28)
     neuron = train(X, D, EPOCAS, LR)
     metrics(neuron, X, D)
     return 0

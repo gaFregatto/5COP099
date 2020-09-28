@@ -55,7 +55,12 @@ def sigmoid(x):
 
 
 def activation(x, w, b):
+    print(w.shape)
+    print(x.shape)
+    print(b.shape)
     result = np.matmul(w, x)
+    print(result)
+    exit(0)
     result = np.add(result, b)
     return np.array([sigmoid(x) for x in result])
 
